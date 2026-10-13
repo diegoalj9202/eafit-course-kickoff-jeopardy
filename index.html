@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course Kickoff Jeopardy</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#f9fbff;background:#081329;--blue:#2254b4;--gold:#ffdc70}
+*{box-sizing:border-box}body{margin:0;padding:24px}main{max-width:1250px;margin:auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(1.5rem,3vw,2.5rem)}p{line-height:1.5}.muted{color:#b7c9e8}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:12px 17px;font-weight:bold}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}button:disabled{cursor:not-allowed;opacity:.4}
+.action{background:var(--gold);color:#101b37}.secondary{background:#22365a;color:white;border:1px solid #526893}.success{background:#36c899;color:#08251c}
+.teams{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:22px 0}
+.team{border:2px solid #49618e;border-radius:12px;padding:13px;background:#112447;text-align:center;cursor:pointer}
+.team.active{border-color:var(--gold);background:#24395f}.team input{background:transparent;color:white;text-align:center;width:100%;border:0;border-bottom:1px solid #667ca9;font-size:1rem;max-width:180px}
+.score{font-size:2rem;font-weight:900;color:var(--gold);margin:10px 0}
+.scorebuttons{display:flex;justify-content:center;gap:6px}.scorebuttons button{padding:6px 12px;background:#355180;color:white}
+.board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:14px 0 20px}
+.category{display:grid;place-items:center;background:#173b85;min-height:84px;text-transform:uppercase;font-weight:900;text-align:center;font-size:clamp(.75rem,1.45vw,1.1rem);padding:8px;border-radius:7px}
+.tile{min-height:95px;background:#2355b4;color:var(--gold);font-size:clamp(1.3rem,3.5vw,2.3rem);text-shadow:1px 2px #152d5c}
+.tile:hover:not(:disabled){background:#346bd0}.tile.done{background:#20314f;color:#8093b7;text-shadow:none}
+.progress{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.panel{background:#14284d;border:1px solid #4a6aa0;border-radius:16px;padding:22px;margin-top:20px}
+footer{margin-top:22px}.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.78);display:grid;place-items:center;padding:20px;z-index:5}
+.modal{background:#102653;border:3px solid #e4bf58;border-radius:18px;padding:28px;width:min(850px,100%);max-height:94vh;overflow:auto;text-align:center;box-shadow:0 15px 45px #000a}
+.modal h2{color:var(--gold);margin:6px 0 16px}.question{font-size:clamp(1.3rem,3vw,2.1rem);line-height:1.4;font-weight:700;margin:22px 0}
+.answer{background:#213b66;border-radius:12px;padding:17px;margin:18px 0;font-size:1.15rem;line-height:1.55;text-align:left}
+.note{color:#c5d6f1;font-size:.95rem}.controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.hidden{display:none!important}.final-title{color:var(--gold);font-size:1.8rem;font-weight:900;text-align:center}
+@media(max-width:650px){body{padding:10px}.board{gap:4px}.category{min-height:85px;font-size:.58rem;padding:3px}.tile{min-height:67px}.team{padding:7px}.team input{font-size:.85rem}.score{font-size:1.4rem}.modal{padding:16px}}
+</style>
+</head>
+<body>
+<main>
+<header><div><h1>🏆 Course Kickoff Jeopardy</h1><p class="muted">Explore the learning approach, policies, and language center services.</p></div><button class="secondary" id="reset">↻ Reset game</button></header>
+<div class="teams" id="teams"></div>
+<div class="progress"><strong id="progress">0 / 25 questions completed</strong><span class="muted">Select a team, then choose a question.</span></div>
+<div class="board" id="board" aria-label="Jeopardy game board"></div>
+<div class="panel"><div class="final-title">FINAL JEOPARDY</div><p>A course-related scenario that brings all the rules together.</p><button class="action" id="finalBtn">Play Final Jeopardy</button></div>
+<footer class="muted">Teacher tip: For 300–500 point questions, ask learners to justify their answers in complete sentences. Answers and teaching prompts appear when revealed.</footer>
+</main>
+<div class="modal-backdrop hidden" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal"><h2 id="modalTitle"></h2><div id="modalContent"></div><div id="modalActions" class="controls"></div></div></div>
+<script>
+'use strict';
+const categories=[
+{name:"Kolb's Learning Cycle",short:"Kolb's Cycle",qs:[
+["What are the four stages of Kolb's Experiential Learning Cycle, in the correct order?","Concrete Experience → Reflective Observation → Abstract Conceptualization → Active Experimentation.","Ask students to explain one stage in their own words."],
+["During this stage, students participate in a meaningful activity or encounter a situation that gives them something to learn from. What is the stage?","Concrete Experience.","Example: Taking part in a simulated job interview."],
+["After a role-play, students consider what went well, what was challenging, and what they could improve. Which stage is this?","Reflective Observation.","Reflection helps learners examine their experiences."],
+["Students identify patterns, study useful language, and develop an understanding of how the language works. Which stage is this?","Abstract Conceptualization.","Example: Identifying structures used to make polite requests."],
+["Students use what they have learned in a new communicative situation. Which stage is this, and why is it important?","Active Experimentation. Students test and apply their learning in new situations.","Bonus: Ask how this stage might lead to another concrete experience."]]},
+{name:"Learning Beyond the Classroom",short:"Learning Approach",qs:[
+["True or false: Learning English in this course is mainly about memorizing grammar rules.","False. The course emphasizes meaningful communication and contextualized language use."],
+["What AI-powered platform will students use to support their autonomous language learning?","Speakology.","Ask returning students what they know about the platform."],
+["What do we mean when we say that learning is contextualized?","Language is introduced and practiced through meaningful situations and contexts, rather than only isolated exercises."],
+["A class simulates a restaurant, and students must order food, ask questions, and solve a problem. What makes this activity valuable?","It recreates a realistic communicative situation in which students use English for a meaningful purpose."],
+["A student wants to improve their English outside class. Name two actions that reflect autonomous learning.","Possible answers: Practicing with Speakology, reviewing feedback, setting learning goals, practicing independently, or reflecting on personal weaknesses."]]},
+{name:"Attendance & Grades",short:"Attendance & Grades",qs:[
+["What is the minimum attendance percentage expected in this course?","70%."],
+["How many unit grades do students receive throughout the course?","Three, one per unit."],
+["What percentage of the final course grade corresponds to the use of the learning platform?","10%."],
+["A student has 65% attendance and a GPA of 4.2. Does the attendance policy automatically require an administrative review?","No. According to the stated policy, students below 70% attendance with a GPA of 4.0 or higher do not require that review."],
+["A student finishes with 60% attendance and a GPA of 3.8. What happens next?","The administration must review the student's case to determine whether the student passes the course.","Review does not automatically mean failure."]]},
+{name:"Your Digital Toolkit",short:"Digital Toolkit",qs:[
+["What is the name of the platform used to manage language center services, grades, and attendance?","EPIK (E-P-I-K)."],
+["You need extra academic support outside your regular classes. What can you request through EPIK?","A tutoring session."],
+["You want to practice speaking with other English learners. What activity can you book through EPIK?","A conversation club session."],
+["Name two administrative or academic tasks students can complete through EPIK.","Possible answers: Enroll in the next course, cancel enrollment, request tutoring, book conversation clubs, or check grades and attendance."],
+["A student wants to verify their attendance, register for a conversation club, and enroll in the next course. How many platforms do they need, and which one?","Just one: EPIK.","Ask a returning student to explain how to access these services."]]},
+{name:"Academic Integrity & Feedback",short:"Integrity & Feedback",qs:[
+["True or false: Academic integrity applies only to written assignments.","False. Both spoken and written productions must be the student's own work."],
+["At what point in the course will students be invited to evaluate their teacher?","At the end of the course, through a teacher evaluation survey."],
+["A student copies an AI-generated paragraph and submits it as their own writing. What course expectation does this violate?","The academic integrity policy: Students must produce their own work."],
+["A student uses AI to practice a conversation and receive feedback, then creates their own response. Is this consistent with the course approach?","Yes, provided the student produces their own work and follows the teacher's instructions about permitted AI assistance.","Distinguish AI-supported learning from AI-generated submissions."],
+["Why are the teacher evaluation survey and academic integrity both important for a successful learning experience?","Academic integrity helps ensure authentic evidence of learning, while student feedback helps the language center and teachers evaluate and improve the learning experience."]]}
+];
+const $=id=>document.getElementById(id);const points=[100,200,300,400,500];
+let scores=[0,0,0],names=['Team 1','Team 2','Team 3'],activeTeam=0,done=new Set(),current=null,finalDone=false;
+function renderTeams(){const el=$('teams');el.innerHTML='';scores.forEach((score,i)=>{const card=document.createElement('div');card.className='team'+(activeTeam===i?' active':'');card.addEventListener('click',e=>{if(e.target.tagName!=='INPUT'&&e.target.tagName!=='BUTTON'){activeTeam=i;renderTeams()}});const input=document.createElement('input');input.value=names[i];input.setAttribute('aria-label',`Name of team ${i+1}`);input.addEventListener('input',()=>names[i]=input.value);const s=document.createElement('div');s.className='score';s.textContent=score;const ctr=document.createElement('div');ctr.className='scorebuttons';[-100,100].forEach(delta=>{const b=document.createElement('button');b.textContent=delta>0?'+100':'−100';b.title='Manual score adjustment';b.onclick=()=>{scores[i]+=delta;renderTeams()};ctr.appendChild(b)});card.append(input,s,ctr);el.appendChild(card)})}
+function renderBoard(){const b=$('board');b.innerHTML='';categories.forEach(cat=>{const h=document.createElement('div');h.className='category';h.textContent=cat.short;b.appendChild(h)});points.forEach((p,r)=>categories.forEach((cat,c)=>{const k=`${c}-${r}`;const btn=document.createElement('button');btn.className='tile'+(done.has(k)?' done':'');btn.textContent=done.has(k)?'✓':p;btn.disabled=done.has(k);btn.setAttribute('aria-label',`${cat.name}, ${p} points`);btn.onclick=()=>showQuestion(c,r);b.appendChild(btn)}));$('progress').textContent=`${done.size} / 25 questions completed`}
+function action(label,cls,fn){const btn=document.createElement('button');btn.className=cls;btn.textContent=label;btn.onclick=fn;$('modalActions').appendChild(btn)}
+function openModal(title){$('modalTitle').textContent=title;$('modalContent').replaceChildren();$('modalActions').replaceChildren();$('overlay').classList.remove('hidden')}
+function paragraph(text,cls=''){const p=document.createElement('p');p.className=cls;p.textContent=text;$('modalContent').appendChild(p)}
+function closeModal(){$('overlay').classList.add('hidden');current=null}
+function showQuestion(c,r){current={c,r};const q=categories[c].qs[r];openModal(`${categories[c].name} · ${points[r]} points`);paragraph(q[0],'question');action('Show answer','action',()=>{const ans=document.createElement('div');ans.className='answer';ans.textContent='✓ '+q[1];$('modalContent').appendChild(ans);if(q[2])paragraph('Teaching prompt: '+q[2],'note');$('modalActions').replaceChildren();action(`Award ${points[r]} to ${names[activeTeam]}`,'success',()=>finishQuestion(true));action('No points','secondary',()=>finishQuestion(false));action('Change team','secondary',()=>{activeTeam=(activeTeam+1)%3;renderTeams();const buttons=$('modalActions').querySelectorAll('button');buttons[0].textContent=`Award ${points[r]} to ${names[activeTeam]}`})});action('Back to board','secondary',closeModal)}
+function finishQuestion(award){if(award)scores[activeTeam]+=points[current.r];done.add(`${current.c}-${current.r}`);closeModal();renderTeams();renderBoard()}
+function showFinal(){openModal('🏆 FINAL JEOPARDY — The Successful Language Learner');paragraph('A student has 65% attendance, a final GPA of 3.9, and has barely used Speakology. They also want extra speaking practice and are unsure how to check their attendance record.','question');paragraph('Challenge: Identify at least four actions or considerations that would help this student understand their situation and use the language center’s resources.');action('Reveal suggested answer','action',()=>{const ans=document.createElement('div');ans.className='answer';const ol=document.createElement('ol');["Their case requires administrative review because attendance is below 70% and their GPA is below 4.0.","They should use Speakology for autonomous practice; platform use contributes 10% of the course grade.","They can book conversation club sessions through EPIK.","They can check their attendance and grades through EPIK.","They can request tutoring through EPIK."].forEach(t=>{const li=document.createElement('li');li.textContent=t;ol.appendChild(li)});ans.appendChild(ol);$('modalContent').appendChild(ans);paragraph('Award up to 500 points (100 per valid idea). Adjust team scores using the +100 buttons.','note');$('modalActions').replaceChildren();action('Return to game','secondary',closeModal)});action('Close','secondary',closeModal)}
+$('finalBtn').onclick=showFinal;$('reset').onclick=()=>{if(confirm('Reset all scores and completed questions?')){scores=[0,0,0];done.clear();activeTeam=0;renderTeams();renderBoard();closeModal()}};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('overlay').classList.contains('hidden'))closeModal()});renderTeams();renderBoard();
+</script>
+</body>
+</html>
